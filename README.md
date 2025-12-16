@@ -30,3 +30,10 @@ python app.py
 
 - **HTML page**: `http://localhost:8080/`
 - **Status endpoint**: `http://localhost:8080/version`
+
+5. **Useful links**:
+
+- [Openrouter](https://openrouter.ai/)
+- [Modelo deepseek gratuito](https://openrouter.ai/nex-agi/deepseek-v3.1-nex-n1:free)
+- [Modelo gratuito Amazon con procesamiento de imagenes](https://openrouter.ai/amazon/nova-2-lite-v1:free)
+- [Busqueda de modelos gratuitos en openrouter](https://openrouter.ai/models?q=free) 
