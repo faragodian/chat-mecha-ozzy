@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gemini Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #020617;
+        color: #e5e7eb;
+      }
+      .chat-shell {
+        background: #020617;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        max-width: 720px;
+        width: 100%;
+        height: 560px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 30px 100px rgba(15, 23, 42, 0.9);
+        overflow: hidden;
+      }
+      .chat-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: radial-gradient(circle at top left, #0ea5e9 0, #020617 52%);
+      }
+      .chat-header-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .chat-header-sub {
+        font-size: 0.78rem;
+        color: #d1d5db;
+      }
+      .status-pill,
+      .model-select {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.55);
+        background: rgba(15, 23, 42, 0.75);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #22c55e;
+      }
+      .status-pill span {
+        color: #e5e7eb;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .model-select {
+        border-radius: 999px;
+        cursor: pointer;
+        color: #e5e7eb;
+      }
+      .model-select select {
+        background: transparent;
+        border: none;
+        color: #e5e7eb;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        outline: none;
+        cursor: pointer;
+      }
+      .model-select option {
+        color: #0b1120;
+      }
+      .chat-log {
+        flex: 1;
+        padding: 16px 18px 10px;
+        overflow-y: auto;
+        background: radial-gradient(circle at bottom, #0f172a 0, #020617 56%);
+      }
+      .msg-row {
+        display: flex;
+        margin-bottom: 10px;
+      }
+      .msg-row.user {
+        justify-content: flex-end;
+      }
+      .msg-bubble {
+        max-width: 80%;
+        padding: 9px 12px;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .msg-row.user .msg-bubble {
+        background: #0ea5e9;
+        color: #0b1120;
+        border-bottom-right-radius: 4px;
+      }
+      .msg-row.assistant .msg-bubble {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-bottom-left-radius: 4px;
+      }
+      .msg-meta {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin-bottom: 2px;
+      }
+      .chat-input {
+        border-top: 1px solid rgba(148, 163, 184, 0.25);
+        padding: 10px 12px;
+        background: #020617;
+        display: flex;
+        gap: 8px;
+      }
+      .chat-input textarea {
+        flex: 1;
+        resize: none;
+        border-radius: 12px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: #020617;
+        color: #e5e7eb;
+        padding: 8px 10px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        max-height: 88px;
+        min-height: 40px;
+        outline: none;
+      }
+      .chat-input textarea:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.6);
+      }
+      .send-btn {
+        border-radius: 999px;
+        border: none;
+        padding: 0 16px;
+        background: linear-gradient(135deg, #0ea5e9, #22c55e);
+        color: #0b1120;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 80px;
+      }
+      .send-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .image-input-container {
+        display: none;
+        padding: 8px 12px;
+        border-top: 1px solid rgba(148, 163, 184, 0.25);
+        background: #020617;
+      }
+      .image-input-container.visible {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .image-input-label {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.5);
+        transition: all 0.2s;
+      }
+      .image-input-label:hover {
+        background: rgba(15, 23, 42, 0.8);
+        border-color: #0ea5e9;
+      }
+      .image-input-label input[type="file"] {
+        display: none;
+      }
+      .image-preview {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+      .image-preview img {
+        max-width: 60px;
+        max-height: 60px;
+        border-radius: 6px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+      }
+      .image-preview button {
+        background: transparent;
+        border: none;
+        color: #fecaca;
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 2px 6px;
+      }
+      .image-preview button:hover {
+        text-decoration: underline;
+      }
+      .helper-row {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        padding: 0 14px 8px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .error {
+        color: #fecaca;
+      }
+      .loading-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #9ca3af;
+        font-size: 0.85rem;
+      }
+      .loading-dots {
+        display: inline-flex;
+        gap: 4px;
+      }
+      .loading-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #9ca3af;
+        animation: loading-bounce 1.4s infinite ease-in-out both;
+      }
+      .loading-dot:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .loading-dot:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+      .loading-dot:nth-child(3) {
+        animation-delay: 0s;
+      }
+      @keyframes loading-bounce {
+        0%, 80%, 100% {
+          transform: scale(0);
+          opacity: 0.5;
+        }
+        40% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      /* Markdown styles */
+      .msg-bubble .markdown-content {
+        line-height: 1.6;
+      }
+      .msg-bubble .markdown-content h1,
+      .msg-bubble .markdown-content h2,
+      .msg-bubble .markdown-content h3,
+      .msg-bubble .markdown-content h4,
+      .msg-bubble .markdown-content h5,
+      .msg-bubble .markdown-content h6 {
+        margin: 0.8em 0 0.4em 0;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      .msg-bubble .markdown-content h1 {
+        font-size: 1.3em;
+      }
+      .msg-bubble .markdown-content h2 {
+        font-size: 1.2em;
+      }
+      .msg-bubble .markdown-content h3 {
+        font-size: 1.1em;
+      }
+      .msg-bubble .markdown-content p {
+        margin: 0.6em 0;
+      }
+      .msg-bubble .markdown-content ul,
+      .msg-bubble .markdown-content ol {
+        margin: 0.6em 0;
+        padding-left: 1.5em;
+      }
+      .msg-bubble .markdown-content li {
+        margin: 0.3em 0;
+      }
+      .msg-bubble .markdown-content code {
+        background: rgba(15, 23, 42, 0.6);
+        padding: 0.15em 0.4em;
+        border-radius: 4px;
+        font-size: 0.9em;
+        font-family: 'Courier New', monospace;
+        color: #fbbf24;
+      }
+      .msg-bubble .markdown-content pre {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 8px;
+        padding: 0.8em;
+        overflow-x: auto;
+        margin: 0.8em 0;
+      }
+      .msg-bubble .markdown-content pre code {
+        background: transparent;
+        padding: 0;
+        color: #e5e7eb;
+        font-size: 0.85em;
+      }
+      .msg-bubble .markdown-content blockquote {
+        border-left: 3px solid #0ea5e9;
+        padding-left: 1em;
+        margin: 0.8em 0;
+        color: #d1d5db;
+        font-style: italic;
+      }
+      .msg-bubble .markdown-content table {
+        border-collapse: collapse;
+        margin: 0.8em 0;
+        width: 100%;
+      }
+      .msg-bubble .markdown-content table th,
+      .msg-bubble .markdown-content table td {
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        padding: 0.4em 0.6em;
+        text-align: left;
+      }
+      .msg-bubble .markdown-content table th {
+        background: rgba(15, 23, 42, 0.6);
+        font-weight: 600;
+      }
+      .msg-bubble .markdown-content strong {
+        font-weight: 600;
+        color: #e5e7eb;
+      }
+      .msg-bubble .markdown-content em {
+        font-style: italic;
+      }
+      .msg-bubble .markdown-content a {
+        color: #38bdf8;
+        text-decoration: underline;
+      }
+      .msg-bubble .markdown-content hr {
+        border: none;
+        border-top: 1px solid rgba(148, 163, 184, 0.3);
+        margin: 1em 0;
+      }
+      /* MathJax equation styles */
+      .msg-bubble .markdown-content .MathJax {
+        color: #e5e7eb;
+      }
+      .msg-bubble .markdown-content .MathJax_Display {
+        margin: 1em 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .msg-bubble .markdown-content mjx-container {
+        display: inline-block;
+        margin: 0.3em 0;
+      }
+      .msg-bubble .markdown-content mjx-container[display="true"] {
+        display: block;
+        margin: 1em 0;
+        text-align: center;
+      }
+    </style>
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <!-- MathJax for LaTeX equation rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </head>
+  <body>
+    <main class="chat-shell">
+      <header class="chat-header">
+        <div>
+          <div class="chat-header-title">Gemini Chat</div>
+          <div class="chat-header-sub">
+            Conversation via your Flask + Gemini backend
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div class="model-select">
+            <span>Model</span>
+            <select id="model-select">
+              <option value="gemini" selected>Gemini</option>
+              <option value="grok">Grok</option>
+              <option value="deepseek">DeepSeek (OpenRouter)</option>
+              <option value="amazon-nova">Amazon Nova (OpenRouter)</option>
+            </select>
+          </div>
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            <span id="status-text">Ready</span>
+          </div>
+        </div>
+      </header>
+
+      <section id="chat-log" class="chat-log">
+        <div class="msg-row assistant">
+          <div class="msg-bubble">
+            <div class="msg-meta">Gemini</div>
+            <div>
+              Hi! I'm Gemini. Ask me anything and I'll respond through your
+              Flask service.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="helper-row">
+        <span>Press Enter to send, Shift+Enter for a new line.</span>
+        <span
+          >Service status:
+          <a href="/version" target="_blank" rel="noreferrer">/version</a></span
+        >
+      </div>
+
+      <div id="image-input-container" class="image-input-container">
+        <label class="image-input-label">
+          📷 Select Image
+          <input type="file" id="image-input" accept="image/*" />
+        </label>
+        <div id="image-preview" class="image-preview"></div>
+      </div>
+      <footer class="chat-input">
+        <textarea
+          id="chat-input"
+          rows="1"
+          placeholder="Type your message to Gemini..."
+        ></textarea>
+        <button id="send-btn" class="send-btn">Send</button>
+      </footer>
+    </main>
+
+    <script>
+      const chatLog = document.getElementById("chat-log");
+      const chatInput = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("send-btn");
+      const statusText = document.getElementById("status-text");
+      const modelSelect = document.getElementById("model-select");
+      const imageInput = document.getElementById("image-input");
+      const imageInputContainer = document.getElementById("image-input-container");
+      const imagePreview = document.getElementById("image-preview");
+      let loadingIndicator = null;
+      let currentImageBase64 = null;
+
+      function showLoadingIndicator(providerLabel) {
+        // Remove any existing loading indicator
+        if (loadingIndicator) {
+          loadingIndicator.remove();
+        }
+
+        const row = document.createElement("div");
+        row.className = "msg-row assistant";
+        row.id = "loading-indicator-row";
+
+        const bubble = document.createElement("div");
+        bubble.className = "msg-bubble";
+
+        const meta = document.createElement("div");
+        meta.className = "msg-meta";
+        meta.textContent = providerLabel || "Assistant";
+
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "loading-indicator";
+        loadingDiv.innerHTML = `
+          <span>Processing</span>
+          <span class="loading-dots">
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+          </span>
+        `;
+
+        bubble.appendChild(meta);
+        bubble.appendChild(loadingDiv);
+        row.appendChild(bubble);
+        chatLog.appendChild(row);
+        chatLog.scrollTop = chatLog.scrollHeight;
+
+        loadingIndicator = row;
+      }
+
+      function hideLoadingIndicator() {
+        if (loadingIndicator) {
+          loadingIndicator.remove();
+          loadingIndicator = null;
+        }
+      }
+
+      function appendMessage(role, text, isError = false, labelOverride = "") {
+        const row = document.createElement("div");
+        row.className = `msg-row ${role}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "msg-bubble";
+        if (isError) bubble.classList.add("error");
+
+        const meta = document.createElement("div");
+        meta.className = "msg-meta";
+        if (role === "user") {
+          meta.textContent = "You";
+        } else {
+          meta.textContent = labelOverride || "Assistant";
+        }
+
+        const body = document.createElement("div");
+        
+        // Render markdown for assistant messages (not errors)
+        if (role === "assistant" && !isError && typeof marked !== "undefined") {
+          body.className = "markdown-content";
+          // Configure marked options for better rendering
+          marked.setOptions({
+            breaks: true, // Convert line breaks to <br>
+            gfm: true, // GitHub Flavored Markdown
+          });
+          body.innerHTML = marked.parse(text);
+          
+          // Render MathJax equations after markdown is processed
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+              MathJax.typesetPromise([body]).catch((err) => {
+                console.error("MathJax rendering error:", err);
+              });
+            }, 0);
+          }
+        } else {
+          // Plain text for user messages and errors
+          body.textContent = text;
+        }
+
+        bubble.appendChild(meta);
+        bubble.appendChild(body);
+        row.appendChild(bubble);
+        chatLog.appendChild(row);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+
+      // Show/hide image input based on selected model
+      function updateImageInputVisibility() {
+        if (modelSelect.value === "amazon-nova") {
+          imageInputContainer.classList.add("visible");
+        } else {
+          imageInputContainer.classList.remove("visible");
+          // Clear image when switching away from Amazon Nova
+          clearImage();
+        }
+      }
+
+      // Convert image file to base64 data URL
+      function imageToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result;
+            // Verify it's a valid data URL
+            if (result && result.startsWith("data:image/")) {
+              resolve(result);
+            } else {
+              reject(new Error("Invalid image format"));
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Handle image selection
+      imageInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+          alert("Please select an image file.");
+          return;
+        }
+
+        try {
+          currentImageBase64 = await imageToBase64(file);
+          showImagePreview(file);
+        } catch (err) {
+          console.error("Error reading image:", err);
+          alert("Error reading image file.");
+        }
+      });
+
+      // Show image preview
+      function showImagePreview(file) {
+        const img = document.createElement("img");
+        img.src = currentImageBase64;
+        img.alt = "Preview";
+
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "✕ Remove";
+        removeBtn.onclick = clearImage;
+
+        imagePreview.innerHTML = "";
+        imagePreview.appendChild(img);
+        imagePreview.appendChild(removeBtn);
+      }
+
+      // Clear selected image
+      function clearImage() {
+        currentImageBase64 = null;
+        imageInput.value = "";
+        imagePreview.innerHTML = "";
+      }
+
+      // Update image input visibility when model changes
+      modelSelect.addEventListener("change", updateImageInputVisibility);
+      // Initialize visibility on page load
+      updateImageInputVisibility();
+
+      async function sendMessage() {
+        const message = chatInput.value.trim();
+        const provider = modelSelect.value;
+
+        // Validation: require message or image
+        if (provider === "amazon-nova") {
+          if (!message && !currentImageBase64) {
+            alert("Please enter a message or select an image for Amazon Nova.");
+            return;
+          }
+        } else {
+          if (!message) return;
+        }
+
+        let providerLabel;
+        if (provider === "grok") {
+          providerLabel = "Grok";
+        } else if (provider === "deepseek") {
+          providerLabel = "DeepSeek";
+        } else if (provider === "amazon-nova") {
+          providerLabel = "Amazon Nova";
+        } else {
+          providerLabel = "Gemini"; /* default Gemini if unknown */
+        }
+
+        // Show user message (or indicate image was sent)
+        const userMessage = message || (currentImageBase64 ? "[Image]" : "");
+        appendMessage("user", userMessage);
+        chatInput.value = "";
+        chatInput.focus();
+
+        sendBtn.disabled = true;
+        statusText.textContent = "Processing…";
+        
+        // Show loading indicator
+        showLoadingIndicator(providerLabel);
+
+        try {
+          const requestBody = {
+            message: message || "",
+            provider: provider,
+          };
+          
+          // Add image if available and provider is Amazon Nova
+          if (provider === "amazon-nova" && currentImageBase64) {
+            // Verify image is in correct format before sending
+            if (!currentImageBase64.startsWith("data:image/")) {
+              alert("Error: Image format is invalid. Please select the image again.");
+              hideLoadingIndicator();
+              sendBtn.disabled = false;
+              statusText.textContent = "Ready";
+              return;
+            }
+            requestBody.image = currentImageBase64;
+          }
+
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
+
+          const payload = await res.json();
+
+          // Hide loading indicator before showing response
+          hideLoadingIndicator();
+
+          if (!res.ok || payload.error) {
+            appendMessage(
+              "assistant",
+              payload.error || "There was an error contacting the model.",
+              true,
+              providerLabel
+            );
+          } else {
+            appendMessage(
+              "assistant",
+              payload.reply || "[empty response]",
+              false,
+              providerLabel
+            );
+          }
+        } catch (err) {
+          // Hide loading indicator on error
+          hideLoadingIndicator();
+          appendMessage(
+            "assistant",
+            "Network error talking to /api/chat: " + err,
+            true
+          );
+        } finally {
+          sendBtn.disabled = false;
+          statusText.textContent = "Ready";
+          // Clear image after sending (optional - you might want to keep it)
+          // clearImage();
+        }
+      }
+
+      sendBtn.addEventListener("click", sendMessage);
+
+      chatInput.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" && !ev.shiftKey) {
+          ev.preventDefault();
+          sendMessage();
+        }
+      });
+    </script>
+  </body>
+</html>
