@@ -65,7 +65,7 @@ def version():
         {
             "service": "servertest1",
             "status": "ok",
-            "version": "1.2.0",
+            "version": "1.1.0",
         }
     )
 
