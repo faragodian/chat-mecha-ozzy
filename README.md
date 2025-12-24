@@ -34,7 +34,7 @@ A modern, production-ready Flask web application that provides interactive chat 
 ## ✨ Features
 
 - 🤖 **Multiple LLM Providers:**
-  - **Gemini 2.0 (Google)** – Fast, reliable text generation
+  - **Gemini 2.5-flash (Google)** – Fast, reliable text generation
   - **OpenAI GPT-4o-mini** – Cost-effective, fast responses
   - **OpenAI GPT-4o** – Most capable model with higher rate limits
   - **OpenAI GPT-5-nano** – Advanced model (early access)
@@ -112,10 +112,10 @@ export OPENROUTER_DEEPSEEK_MODEL="nex-agi/deepseek-v3.1-nex-n1:free"
 
 | Provider | Model | Capabilities | Cost | Image Support |
 |----------|-------|--------------|------|---------------|
-| **Google** | Gemini 2.0 Flash | Text generation | Free tier | ❌ |
+| **Google** | Gemini 2.5 Flash | Text generation | Free tier | ❌ |
 | **OpenAI** | GPT-4o-mini | Fast responses | Low | ✅ |
 | **OpenAI** | GPT-4o | Most capable | Medium | ✅ |
-| **OpenAI** | GPT-5-nano | Advanced (early access) | Medium-High | ✅ |
+| **OpenAI** | GPT-5-nano | Advanced | Medium-High | ✅ |
 | **DeepSeek** | DeepSeek v3.1 | High quality | Free | ❌ |
 
 ### Key Features by Provider:
