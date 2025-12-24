@@ -34,7 +34,7 @@ A modern, production-ready Flask web application that provides interactive chat 
 ## ✨ Features
 
 - 🤖 **Multiple LLM Providers:**
-  - **Gemini 2.5-flash (Google)** – Fast, reliable text generation
+  - **Gemini 2.5 (Google)** – Fast, reliable text generation
   - **OpenAI GPT-4o-mini** – Cost-effective, fast responses
   - **OpenAI GPT-4o** – Most capable model with higher rate limits
   - **OpenAI GPT-5-nano** – Advanced model (early access)

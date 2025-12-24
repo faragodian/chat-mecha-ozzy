@@ -135,6 +135,19 @@ function updateImageInputVisibility() {
   }
 }
 
+function updatePlaceholder() {
+  const modelNames = {
+    "gemini": "Gemini",
+    "openai-mini": "OpenAI (GPT-4o-mini)",
+    "openai": "OpenAI (GPT-4o)",
+    "openai-5-nano": "OpenAI (GPT-5-nano)",
+    "deepseek": "DeepSeek (OpenRouter)"
+  };
+
+  const modelName = modelNames[modelSelect.value] || "AI Assistant";
+  chatInput.placeholder = `Type your message to ${modelName}...`;
+}
+
 function imageToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -276,10 +289,14 @@ setTimeout(() => {
       }
     });
 
-    // Initialize image input visibility
+    // Initialize image input visibility and placeholder
     if (modelSelect) {
-      modelSelect.addEventListener("change", updateImageInputVisibility);
+      modelSelect.addEventListener("change", () => {
+        updateImageInputVisibility();
+        updatePlaceholder();
+      });
       updateImageInputVisibility();
+      updatePlaceholder();
     }
 
     // Attach image input event listener
