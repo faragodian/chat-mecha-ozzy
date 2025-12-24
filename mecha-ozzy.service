@@ -1,0 +1,12 @@
+[Unit]
+Description=Gunicorn instance for mecha-ozzy. Original file of service is at "/home/jarteaga/Documents/mecha-ozzy/mecha-ozzy.service". If edited remember to reload systemctl daemon with "sudo systemctl daemon-reload"
+After=network.target
+
+[Service]
+User=jarteaga
+Group=www-data
+WorkingDirectory=/home/jarteaga/Documents/mecha-ozzy
+ExecStart=/home/jarteaga/.local/bin/gunicorn --workers 4 --bind 0.0.0.0:8080 app:app
+
+[Install]
+WantedBy=multi-user.target
